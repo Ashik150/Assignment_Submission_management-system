@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { Icon } from '../components/Icon'
 import { Modal } from '../components/Modal'
+import { PdfAttachment } from '../components/PdfAttachment'
 import { ApiError, apiRequest } from '../lib/api'
 import type { AdminSubmission, SubmissionStatus, TeacherAssignment } from '../types'
 
@@ -121,7 +122,7 @@ export function TeacherSubmissionsPage({ token }: TeacherSubmissionsPageProps) {
       </section>
       {selected && <Modal onClose={() => setSelected(null)} subtitle={`${selected.studentName} · Submitted ${new Date(selected.submittedAt).toLocaleString()}`} title={selected.assignmentTitle}>
         <form className="submission-review-form" onSubmit={saveReview}>
-          <section className="answer-panel"><span className="detail-label">Student answer</span><p>{selected.answer}</p></section>
+          <section className="answer-panel"><span className="detail-label">Student answer</span><p className={!selected.answer ? 'muted-copy' : ''}>{selected.answer || 'No written answer was included.'}</p>{selected.pdfFileName && selected.pdfFileSize !== null && <PdfAttachment fileName={selected.pdfFileName} fileSize={selected.pdfFileSize} submissionId={selected.id} token={token} />}</section>
           <div className="form-grid review-fields">
             <label>Marks (maximum {selected.maximumMarks})<input max={selected.maximumMarks} min="0" onChange={(event) => setForm({ ...form, marks: event.target.value })} required={form.status === 'Reviewed'} step="0.01" type="number" value={form.marks} /></label>
             <label>Submission status<select onChange={(event) => setForm({ ...form, status: event.target.value as SubmissionStatus })} value={form.status}><option value="Submitted">Submitted</option><option value="Late">Late</option><option value="Reviewed">Reviewed</option><option value="Returned">Returned for revision</option></select></label>

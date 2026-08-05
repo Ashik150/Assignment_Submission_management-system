@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { Icon } from '../components/Icon'
 import { Modal } from '../components/Modal'
+import { PdfAttachment } from '../components/PdfAttachment'
 import { ApiError, apiRequest } from '../lib/api'
 import type { StudentSubmission, SubmissionStatus } from '../types'
 
@@ -11,6 +12,8 @@ export function StudentSubmissionsPage({ token }: StudentSubmissionsPageProps) {
   const [statusFilter, setStatusFilter] = useState<'' | SubmissionStatus>('')
   const [selected, setSelected] = useState<StudentSubmission | null>(null)
   const [answer, setAnswer] = useState('')
+  const [pdf, setPdf] = useState<File | null>(null)
+  const [removePdf, setRemovePdf] = useState(false)
   const [editing, setEditing] = useState(false)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -35,6 +38,8 @@ export function StudentSubmissionsPage({ token }: StudentSubmissionsPageProps) {
   const openSubmission = (submission: StudentSubmission) => {
     setSelected(submission)
     setAnswer(submission.answer)
+    setPdf(null)
+    setRemovePdf(false)
     setEditing(false)
     setError('')
   }
@@ -44,14 +49,26 @@ export function StudentSubmissionsPage({ token }: StudentSubmissionsPageProps) {
     if (!selected) return
     setSaving(true)
     setError('')
+    if (!answer.trim() && !pdf && (!selected.pdfFileName || removePdf)) {
+      setError('Write an answer, attach a PDF, or provide both.')
+      setSaving(false)
+      return
+    }
+
+    const formData = new FormData()
+    formData.append('answer', answer)
+    if (pdf) formData.append('pdf', pdf)
+    if (removePdf) formData.append('removePdf', 'true')
     try {
       const updated = await apiRequest<StudentSubmission>(
         `/api/student/submissions/${selected.id}`,
-        { method: 'PUT', body: JSON.stringify({ answer }) },
+        { method: 'PUT', body: formData },
         token,
       )
       setSubmissions((current) => current.map((submission) => submission.id === updated.id ? updated : submission))
       setSelected(updated)
+      setPdf(null)
+      setRemovePdf(false)
       setEditing(false)
     } catch (requestError) {
       setError(requestError instanceof ApiError ? requestError.message : 'Could not update your answer.')
@@ -93,7 +110,7 @@ export function StudentSubmissionsPage({ token }: StudentSubmissionsPageProps) {
         <div className="student-submission-detail">
           <div className="detail-meta"><div><span>Status</span><strong className={`submission-status ${selected.status.toLowerCase()}`}>{selected.status}</strong></div><div><span>Marks</span><strong>{selected.marks === null ? 'Not marked' : `${selected.marks} / ${selected.maximumMarks}`}</strong></div></div>
           {selected.feedback && <section className="feedback-panel"><span className="detail-label">Teacher feedback</span><p>{selected.feedback}</p></section>}
-          {!editing ? <section><span className="detail-label">Your answer</span><p className="submitted-answer">{selected.answer}</p></section> : <form className="answer-form submission-update-form" onSubmit={updateAnswer}><label>Update your answer<textarea autoFocus maxLength={10000} minLength={1} onChange={(event) => setAnswer(event.target.value)} required rows={8} value={answer} /></label>{error && <div className="alert error" role="alert">{error}</div>}<footer className="form-actions"><button className="secondary-button" onClick={() => { setEditing(false); setAnswer(selected.answer) }} type="button">Cancel</button><button className="primary-button" disabled={saving} type="submit">{saving ? 'Updating…' : 'Update submission'}</button></footer></form>}
+          {!editing ? <section><span className="detail-label">Your answer</span><p className={selected.answer ? 'submitted-answer' : 'submitted-answer muted-copy'}>{selected.answer || 'No written answer was included.'}</p>{selected.pdfFileName && selected.pdfFileSize !== null && <PdfAttachment fileName={selected.pdfFileName} fileSize={selected.pdfFileSize} submissionId={selected.id} token={token} />}</section> : <form className="answer-form submission-update-form" onSubmit={updateAnswer}><label>Update your written answer (optional)<textarea autoFocus maxLength={10000} onChange={(event) => setAnswer(event.target.value)} placeholder="Write your answer here, attach a PDF below, or do both…" rows={7} value={answer} /></label><div className="pdf-upload"><label>Replace or add a PDF (optional)<input accept=".pdf,application/pdf" onChange={(event) => { const file = event.target.files?.[0] ?? null; if (file && file.size > 10 * 1024 * 1024) { setError('The PDF must be 10 MB or smaller.'); event.target.value = ''; setPdf(null); return } setError(''); setPdf(file); if (file) setRemovePdf(false) }} type="file" /></label><small>PDF only, maximum 10 MB.</small>{selected.pdfFileName && selected.pdfFileSize !== null && !pdf && <>{!removePdf && <PdfAttachment fileName={selected.pdfFileName} fileSize={selected.pdfFileSize} submissionId={selected.id} token={token} />}<label className="remove-file"><input checked={removePdf} onChange={(event) => setRemovePdf(event.target.checked)} type="checkbox" /> Remove the current PDF</label></>}</div>{error && <div className="alert error" role="alert">{error}</div>}<footer className="form-actions"><button className="secondary-button" onClick={() => { setEditing(false); setAnswer(selected.answer); setPdf(null); setRemovePdf(false) }} type="button">Cancel</button><button className="primary-button" disabled={saving} type="submit">{saving ? 'Updating…' : 'Update submission'}</button></footer></form>}
           {!editing && <footer className="submission-detail-actions"><span>{selected.canUpdate ? `You can update this answer until ${new Date(selected.deadline).toLocaleString()}.` : 'This submission can no longer be updated.'}</span>{selected.canUpdate && <button className="primary-button" onClick={() => setEditing(true)} type="button"><Icon name="edit" size={17} /> Update answer</button>}</footer>}
         </div>
       </Modal>}

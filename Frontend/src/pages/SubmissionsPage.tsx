@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Icon } from '../components/Icon'
 import { Modal } from '../components/Modal'
+import { PdfAttachment } from '../components/PdfAttachment'
 import { ApiError, apiRequest } from '../lib/api'
 import type { AdminAssignment, AdminSubmission, SubmissionStatus } from '../types'
 
@@ -77,7 +78,7 @@ export function SubmissionsPage({ token }: SubmissionsPageProps) {
       {selected && <Modal onClose={() => setSelected(null)} subtitle={`${selected.studentName} · ${new Date(selected.submittedAt).toLocaleString()}`} title={selected.assignmentTitle}>
         <div className="submission-detail">
           <div className="detail-meta"><div><span>Status</span><strong className={`submission-status ${selected.status.toLowerCase()}`}>{selected.status}</strong></div><div><span>Marks</span><strong>{selected.marks ?? 'Not marked'}{selected.marks !== null && ` / ${selected.maximumMarks}`}</strong></div></div>
-          <section><span className="detail-label">Student answer</span><p>{selected.answer}</p></section>
+          <section><span className="detail-label">Student answer</span><p className={!selected.answer ? 'muted-copy' : ''}>{selected.answer || 'No written answer was included.'}</p>{selected.pdfFileName && selected.pdfFileSize !== null && <PdfAttachment fileName={selected.pdfFileName} fileSize={selected.pdfFileSize} submissionId={selected.id} token={token} />}</section>
           <section><span className="detail-label">Teacher feedback</span><p className={!selected.feedback ? 'muted-copy' : ''}>{selected.feedback || 'No feedback has been provided yet.'}</p></section>
           <footer className="detail-footer">Last updated {new Date(selected.updatedAt).toLocaleString()}</footer>
         </div>
