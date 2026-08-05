@@ -134,6 +134,11 @@ public sealed class TeacherSubmissionsController(MongoDbContext database) : Cont
                 $"Marks cannot exceed the assignment maximum of {assignment.MaximumMarks}.");
         }
 
+        if (request.Status == SubmissionStatus.Reviewed && request.Marks is null)
+        {
+            return InvalidRequest("A mark is required when a submission is set to Reviewed.");
+        }
+
         submission.Marks = request.Marks;
         submission.Feedback = request.Feedback.Trim();
         submission.Status = request.Status;
