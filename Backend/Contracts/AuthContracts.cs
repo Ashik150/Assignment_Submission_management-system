@@ -4,8 +4,8 @@ using Backend.Models;
 namespace Backend.Contracts;
 
 public sealed record LoginRequest(
-    [property: Required, EmailAddress] string Email,
-    [property: Required] string Password);
+    [Required, EmailAddress] string Email,
+    [Required] string Password);
 
 public sealed record AuthenticatedUser(
     string Id,

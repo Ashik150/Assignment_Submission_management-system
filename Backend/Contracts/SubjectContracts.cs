@@ -3,16 +3,16 @@ using System.ComponentModel.DataAnnotations;
 namespace Backend.Contracts;
 
 public sealed record CreateSubjectRequest(
-    [property: Required, StringLength(120, MinimumLength = 2)] string Name,
-    [property: Required, StringLength(30, MinimumLength = 2)] string Code,
-    [property: Required] string CourseId,
+    [Required, StringLength(120, MinimumLength = 2)] string Name,
+    [Required, StringLength(30, MinimumLength = 2)] string Code,
+    [Required] string CourseId,
     string? TeacherId,
     bool IsActive = true);
 
 public sealed record UpdateSubjectRequest(
-    [property: Required, StringLength(120, MinimumLength = 2)] string Name,
-    [property: Required, StringLength(30, MinimumLength = 2)] string Code,
-    [property: Required] string CourseId,
+    [Required, StringLength(120, MinimumLength = 2)] string Name,
+    [Required, StringLength(30, MinimumLength = 2)] string Code,
+    [Required] string CourseId,
     string? TeacherId,
     bool IsActive);
 
