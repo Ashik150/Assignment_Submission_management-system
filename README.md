@@ -70,6 +70,7 @@ Backend/
   Data/            MongoDB collections, indexes, and seed logic
   Models/          MongoDB documents and domain enums
   Services/        Password hashing and token creation
+Backend.Tests/     xUnit business-rule, workflow, and authorization tests
 Frontend/
   src/components/  Reusable role-aware layout, icons, and modal
   src/lib/         API client
@@ -78,15 +79,26 @@ Frontend/
 
 ## Local setup
 
+Run the following commands from the repository root unless a step says otherwise.
+
 ### Prerequisites
 
 - .NET 9 SDK
 - Node.js 20 or newer
+- npm (included with Node.js)
 - A MongoDB Atlas deployment (or another compatible MongoDB connection string)
 
-### 1. Configure MongoDB and authentication
+Confirm that the required runtimes are available:
 
-Create an Atlas database user, add your current IP address under Atlas Network Access, then create the local environment file:
+```bash
+dotnet --version
+node --version
+npm --version
+```
+
+### 1. Configure the backend
+
+For MongoDB Atlas, create a database user and add your current IP address under **Network Access**. Then copy the backend environment template:
 
 ```bash
 cp Backend/.env.example Backend/.env
@@ -102,20 +114,32 @@ Seed__AdminEmail=admin@example.com
 Seed__AdminPassword=Admin123!
 ```
 
-If the MongoDB password contains reserved URL characters such as `@`, `:`, `/`, or `#`, URL-encode the password before placing it in the connection string. The backend connects during startup so invalid credentials fail immediately instead of failing on the first API request.
+Configuration notes:
 
-### 2. Run the backend
+- Replace `<username>`, `<password>`, and `<cluster-host>` with the MongoDB values.
+- URL-encode reserved password characters such as `@`, `:`, `/`, or `#`.
+- Keep `MongoDb__DatabaseName` consistent; the application creates its collections and indexes automatically.
+- Use a random `Jwt__Secret` of at least 32 characters outside local development.
+- `Backend/.env` is ignored by Git and must never be committed.
+- The backend connects to MongoDB during startup, so invalid credentials or Atlas network rules cause startup to fail immediately.
+
+Restore dependencies and start the API:
 
 ```bash
 dotnet restore Backend/Backend.csproj
 dotnet run --project Backend/Backend.csproj
 ```
 
-The API runs at `http://localhost:5080`. In development, the OpenAPI document is available at `http://localhost:5080/openapi/v1.json`.
+Keep this terminal running. A successful startup reports that the server is listening on `http://localhost:5080`.
 
-### 3. Run the frontend
+Backend URLs:
 
-In another terminal:
+- Health response: `http://localhost:5080/`
+- OpenAPI document: `http://localhost:5080/openapi/v1.json`
+
+### 2. Configure and run the frontend
+
+Open a second terminal and run:
 
 ```bash
 cd Frontend
@@ -124,24 +148,92 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Open `http://localhost:5173`.
+The frontend environment file should contain:
 
-### Development administrator
-
-```text
-Email:    admin@example.com
-Password: Admin123!
+```dotenv
+VITE_API_BASE_URL=http://localhost:5080
 ```
 
-These are development defaults. Change them through environment variables before deploying. The seed process only creates the administrator when that email does not already exist; it does not overwrite an existing password.
+Keep the frontend terminal running and open `http://localhost:5173`. The backend allows this origin by default.
 
-### Create a teacher login
+### Run the project after first-time setup
 
-Sign in as the development administrator, open **People**, and create an active Teacher account with an email and temporary password. Then create a course and subject, assign that teacher to the subject, log out, and sign in through the same page with the teacher credentials.
+After dependencies and environment files exist, start the project with two terminals.
 
-### Create a student login
+Terminal 1, from the repository root:
 
-Sign in as the development administrator, create or select an active course, then open **People** and create an active Student account. Select the student's course and provide an email and temporary password. Log out and use those credentials on the shared login page. The student will see published assignments for that course only.
+```bash
+dotnet run --project Backend/Backend.csproj
+```
+
+Terminal 2, from the repository root:
+
+```bash
+npm run dev --prefix Frontend
+```
+
+Then visit `http://localhost:5173`.
+
+## Login credentials and account creation
+
+### Default development administrator
+
+```text
+Username/email: admin@example.com
+Password:       Admin123!
+```
+
+Use these credentials on the shared login page at `http://localhost:5173`.
+
+These values come from `Seed__AdminEmail` and `Seed__AdminPassword` in `Backend/.env`. They are development defaults and must be changed before deployment. On backend startup, the seed process creates this administrator only when the configured email does not already exist. Changing the environment password later does not replace the password of an existing administrator record.
+
+### Create and distribute a teacher login
+
+1. Sign in with the administrator credentials.
+2. Open **People** from the sidebar.
+3. Select **Add person**.
+4. Enter the teacher's full name, email, and a temporary password of at least 8 characters.
+5. Select the **Teacher** role, keep the account active, and save it.
+6. Open **Courses** and create the course if it does not already exist.
+7. Open **Subjects**, create the subject under that course, and assign the new teacher.
+8. Give the teacher the email and temporary password entered in step 4.
+9. Log out and verify the credentials through the same shared login page.
+
+Teachers are not enrolled directly in a course. Their course access comes from subjects assigned to them.
+
+### Create and distribute a student login
+
+1. Sign in with the administrator credentials.
+2. Open **Courses** and create or confirm the student's active course.
+3. Open **People** and select **Add person**.
+4. Enter the student's full name, email, and a temporary password of at least 8 characters.
+5. Select the **Student** role.
+6. Select the student's course, keep the account active, and save it.
+7. Give the student the email and temporary password entered in step 4.
+8. Log out and verify the credentials through the shared login page.
+
+The student will only see published assignments for the selected course.
+
+### Getting or resetting teacher and student credentials
+
+- The administrator can see account names, emails, roles, courses, and active status under **People**.
+- Existing passwords cannot be displayed or recovered because the backend stores password hashes, not plain-text passwords.
+- The application does not currently email credentials automatically. The administrator must securely share the email and temporary password when creating the account.
+- If a teacher or student forgets their password, the administrator should open **People**, edit the account, enter a new temporary password, save it, and share the replacement credentials.
+- Deactivated accounts cannot log in until an administrator activates them again.
+
+### Recommended first-time data order
+
+To make all three portals usable, create records in this order:
+
+1. Start the backend so the administrator is seeded.
+2. Sign in as administrator.
+3. Create a course.
+4. Create a teacher account.
+5. Create a subject for the course and assign the teacher.
+6. Create a student account and enroll it in the course.
+7. Sign in as teacher and publish an assignment for that course and subject.
+8. Sign in as student to view and submit the assignment.
 
 ## Admin API
 
