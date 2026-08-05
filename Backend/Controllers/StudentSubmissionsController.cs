@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Backend.Contracts;
 using Backend.Data;
 using Backend.Models;
+using Backend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Bson;
@@ -12,7 +13,9 @@ namespace Backend.Controllers;
 [ApiController]
 [Authorize(Roles = nameof(UserRole.Student))]
 [Route("api/student")]
-public sealed class StudentSubmissionsController(MongoDbContext database) : ControllerBase
+public sealed class StudentSubmissionsController(
+    MongoDbContext database,
+    SubmissionPdfService pdfService) : ControllerBase
 {
     [HttpGet("submissions")]
     public async Task<ActionResult<IReadOnlyList<StudentSubmissionResponse>>> GetAll(
@@ -67,9 +70,10 @@ public sealed class StudentSubmissionsController(MongoDbContext database) : Cont
     }
 
     [HttpPost("assignments/{assignmentId}/submission")]
+    [Consumes("multipart/form-data")]
     public async Task<ActionResult<StudentSubmissionResponse>> Submit(
         string assignmentId,
-        SubmitAnswerRequest request,
+        [FromForm] SubmitAnswerRequest request,
         CancellationToken cancellationToken)
     {
         if (!ObjectId.TryParse(assignmentId, out _))
@@ -103,11 +107,33 @@ public sealed class StudentSubmissionsController(MongoDbContext database) : Cont
             return ConflictProblem("The deadline has passed and this assignment no longer accepts submissions.");
         }
 
+        var answer = request.Answer.Trim();
+        if (answer.Length == 0 && request.Pdf is null)
+        {
+            return InvalidRequest("Write an answer, attach a PDF, or provide both.");
+        }
+
+        StoredSubmissionPdf? uploadedPdf = null;
+        if (request.Pdf is not null)
+        {
+            try
+            {
+                uploadedPdf = await pdfService.Upload(request.Pdf, cancellationToken);
+            }
+            catch (InvalidDataException exception)
+            {
+                return InvalidRequest(exception.Message);
+            }
+        }
+
         var submission = new Submission
         {
             AssignmentId = assignmentId,
             StudentId = student.Id!,
-            Answer = request.Answer.Trim(),
+            Answer = answer,
+            PdfFileId = uploadedPdf?.FileId,
+            PdfFileName = uploadedPdf?.FileName,
+            PdfFileSize = uploadedPdf?.FileSize,
             Status = SubmissionStatus.Submitted
         };
 
@@ -117,7 +143,13 @@ public sealed class StudentSubmissionsController(MongoDbContext database) : Cont
         }
         catch (MongoWriteException exception) when (exception.WriteError?.Category == ServerErrorCategory.DuplicateKey)
         {
+            await pdfService.Delete(uploadedPdf?.FileId, cancellationToken);
             return ConflictProblem("You have already submitted an answer for this assignment.");
+        }
+        catch
+        {
+            await pdfService.Delete(uploadedPdf?.FileId, cancellationToken);
+            throw;
         }
 
         return CreatedAtAction(
@@ -127,9 +159,10 @@ public sealed class StudentSubmissionsController(MongoDbContext database) : Cont
     }
 
     [HttpPut("submissions/{id}")]
+    [Consumes("multipart/form-data")]
     public async Task<ActionResult<StudentSubmissionResponse>> Update(
         string id,
-        SubmitAnswerRequest request,
+        [FromForm] SubmitAnswerRequest request,
         CancellationToken cancellationToken)
     {
         if (!ObjectId.TryParse(id, out _))
@@ -170,15 +203,62 @@ public sealed class StudentSubmissionsController(MongoDbContext database) : Cont
             return ConflictProblem("A reviewed submission cannot be updated.");
         }
 
-        submission.Answer = request.Answer.Trim();
+        var answer = request.Answer.Trim();
+        var keepsExistingPdf = request.Pdf is null && !request.RemovePdf && submission.PdfFileId is not null;
+        if (answer.Length == 0 && request.Pdf is null && !keepsExistingPdf)
+        {
+            return InvalidRequest("Write an answer, attach a PDF, or provide both.");
+        }
+
+        StoredSubmissionPdf? uploadedPdf = null;
+        if (request.Pdf is not null)
+        {
+            try
+            {
+                uploadedPdf = await pdfService.Upload(request.Pdf, cancellationToken);
+            }
+            catch (InvalidDataException exception)
+            {
+                return InvalidRequest(exception.Message);
+            }
+        }
+
+        var previousPdfId = submission.PdfFileId;
+        submission.Answer = answer;
+        if (uploadedPdf is not null)
+        {
+            submission.PdfFileId = uploadedPdf.FileId;
+            submission.PdfFileName = uploadedPdf.FileName;
+            submission.PdfFileSize = uploadedPdf.FileSize;
+        }
+        else if (request.RemovePdf)
+        {
+            submission.PdfFileId = null;
+            submission.PdfFileName = null;
+            submission.PdfFileSize = null;
+        }
+
         submission.Status = SubmissionStatus.Submitted;
         submission.Marks = null;
         submission.ReviewedAt = null;
         submission.UpdatedAt = DateTime.UtcNow;
-        await database.Submissions.ReplaceOneAsync(
-            candidate => candidate.Id == id && candidate.StudentId == student.Id,
-            submission,
-            cancellationToken: cancellationToken);
+        try
+        {
+            await database.Submissions.ReplaceOneAsync(
+                candidate => candidate.Id == id && candidate.StudentId == student.Id,
+                submission,
+                cancellationToken: cancellationToken);
+        }
+        catch
+        {
+            await pdfService.Delete(uploadedPdf?.FileId, cancellationToken);
+            throw;
+        }
+
+        if (previousPdfId is not null && previousPdfId != submission.PdfFileId)
+        {
+            await pdfService.Delete(previousPdfId, cancellationToken);
+        }
 
         return Ok((await ToResponses([submission], cancellationToken)).Single());
     }
@@ -232,6 +312,8 @@ public sealed class StudentSubmissionsController(MongoDbContext database) : Cont
                     ? "Unknown subject"
                     : subjectNames.GetValueOrDefault(assignment.SubjectId, "Unknown subject"),
                 submission.Answer,
+                submission.PdfFileName,
+                submission.PdfFileSize,
                 submission.Status,
                 submission.Marks,
                 assignment?.MaximumMarks ?? 0,

@@ -3,8 +3,15 @@ using Backend.Models;
 
 namespace Backend.Contracts;
 
-public sealed record SubmitAnswerRequest(
-    [Required, StringLength(10000, MinimumLength = 1)] string Answer);
+public sealed class SubmitAnswerRequest
+{
+    [StringLength(10000)]
+    public string Answer { get; init; } = string.Empty;
+
+    public IFormFile? Pdf { get; init; }
+
+    public bool RemovePdf { get; init; }
+}
 
 public sealed record StudentSubmissionResponse(
     string Id,
@@ -13,6 +20,8 @@ public sealed record StudentSubmissionResponse(
     string SubjectId,
     string SubjectName,
     string Answer,
+    string? PdfFileName,
+    long? PdfFileSize,
     SubmissionStatus Status,
     decimal? Marks,
     decimal MaximumMarks,

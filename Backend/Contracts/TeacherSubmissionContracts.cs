@@ -16,6 +16,8 @@ public sealed record TeacherSubmissionResponse(
     string StudentName,
     string StudentEmail,
     string Answer,
+    string? PdfFileName,
+    long? PdfFileSize,
     SubmissionStatus Status,
     decimal? Marks,
     decimal MaximumMarks,

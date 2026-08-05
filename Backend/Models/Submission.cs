@@ -23,7 +23,17 @@ public sealed class Submission
     [BsonRepresentation(BsonType.ObjectId)]
     public required string StudentId { get; set; }
 
-    public required string Answer { get; set; }
+    public string Answer { get; set; } = string.Empty;
+
+    [BsonRepresentation(BsonType.ObjectId)]
+    [BsonIgnoreIfNull]
+    public string? PdfFileId { get; set; }
+
+    [BsonIgnoreIfNull]
+    public string? PdfFileName { get; set; }
+
+    [BsonIgnoreIfNull]
+    public long? PdfFileSize { get; set; }
 
     [BsonRepresentation(BsonType.String)]
     public SubmissionStatus Status { get; set; } = SubmissionStatus.Submitted;
