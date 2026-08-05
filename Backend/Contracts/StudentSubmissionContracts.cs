@@ -3,18 +3,22 @@ using Backend.Models;
 
 namespace Backend.Contracts;
 
-public sealed record ReviewSubmissionRequest(
-    [Range(typeof(decimal), "0", "10000")] decimal? Marks,
-    [StringLength(2000)] string Feedback,
-    SubmissionStatus Status);
+public sealed class SubmitAnswerRequest
+{
+    [StringLength(10000)]
+    public string? Answer { get; init; }
 
-public sealed record TeacherSubmissionResponse(
+    public IFormFile? Pdf { get; init; }
+
+    public bool RemovePdf { get; init; }
+}
+
+public sealed record StudentSubmissionResponse(
     string Id,
     string AssignmentId,
     string AssignmentTitle,
-    string StudentId,
-    string StudentName,
-    string StudentEmail,
+    string SubjectId,
+    string SubjectName,
     string Answer,
     string? PdfFileName,
     long? PdfFileSize,
@@ -22,6 +26,8 @@ public sealed record TeacherSubmissionResponse(
     decimal? Marks,
     decimal MaximumMarks,
     string Feedback,
+    DateTime Deadline,
     DateTime SubmittedAt,
     DateTime? ReviewedAt,
-    DateTime UpdatedAt);
+    DateTime UpdatedAt,
+    bool CanUpdate);

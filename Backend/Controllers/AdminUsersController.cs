@@ -47,8 +47,20 @@ public sealed class AdminUsersController(
         var users = await database.Users.Find(filter)
             .SortBy(user => user.FullName)
             .ToListAsync(cancellationToken);
+        var courseIds = users
+            .Where(user => user.CourseId is not null)
+            .Select(user => user.CourseId!)
+            .Distinct()
+            .ToArray();
+        var courses = courseIds.Length == 0
+            ? []
+            : await database.Courses.Find(Builders<Course>.Filter.In(course => course.Id, courseIds))
+                .ToListAsync(cancellationToken);
+        var courseNames = courses.ToDictionary(course => course.Id!, course => course.Name);
 
-        return Ok(users.Select(ToResponse));
+        return Ok(users.Select(user => ToResponse(
+            user,
+            user.CourseId is null ? null : courseNames.GetValueOrDefault(user.CourseId))));
     }
 
     [HttpGet("{id}")]
@@ -64,9 +76,16 @@ public sealed class AdminUsersController(
         var user = await database.Users.Find(candidate => candidate.Id == id)
             .FirstOrDefaultAsync(cancellationToken);
 
-        return user is null || !IsManagedRole(user.Role)
-            ? NotFoundProblem("User not found.")
-            : Ok(ToResponse(user));
+        if (user is null || !IsManagedRole(user.Role))
+        {
+            return NotFoundProblem("User not found.");
+        }
+
+        var course = user.CourseId is null
+            ? null
+            : await database.Courses.Find(candidate => candidate.Id == user.CourseId)
+                .FirstOrDefaultAsync(cancellationToken);
+        return Ok(ToResponse(user, course?.Name));
     }
 
     [HttpPost]
@@ -79,12 +98,22 @@ public sealed class AdminUsersController(
             return BadRequestProblem("Only Teacher and Student users can be created.");
         }
 
+        var enrollment = await ResolveCourseEnrollment(
+            request.Role,
+            request.CourseId,
+            cancellationToken);
+        if (enrollment.Error is not null)
+        {
+            return enrollment.Error;
+        }
+
         var user = new User
         {
             FullName = request.FullName.Trim(),
             Email = request.Email.Trim().ToLowerInvariant(),
             PasswordHash = passwordHasher.Hash(request.Password),
             Role = request.Role,
+            CourseId = enrollment.Course?.Id,
             IsActive = request.IsActive
         };
 
@@ -97,7 +126,7 @@ public sealed class AdminUsersController(
             return ConflictProblem("A user with this email address already exists.");
         }
 
-        var response = ToResponse(user);
+        var response = ToResponse(user, enrollment.Course?.Name);
         return CreatedAtAction(nameof(GetById), new { id = user.Id }, response);
     }
 
@@ -115,6 +144,15 @@ public sealed class AdminUsersController(
         if (!IsManagedRole(request.Role))
         {
             return BadRequestProblem("Only Teacher and Student roles can be assigned.");
+        }
+
+        var enrollment = await ResolveCourseEnrollment(
+            request.Role,
+            request.CourseId,
+            cancellationToken);
+        if (enrollment.Error is not null)
+        {
+            return enrollment.Error;
         }
 
         var user = await database.Users.Find(candidate => candidate.Id == id)
@@ -141,6 +179,7 @@ public sealed class AdminUsersController(
         user.FullName = request.FullName.Trim();
         user.Email = request.Email.Trim().ToLowerInvariant();
         user.Role = request.Role;
+        user.CourseId = enrollment.Course?.Id;
         user.IsActive = request.IsActive;
         user.UpdatedAt = DateTime.UtcNow;
         if (!string.IsNullOrWhiteSpace(request.Password))
@@ -160,7 +199,7 @@ public sealed class AdminUsersController(
             return ConflictProblem("A user with this email address already exists.");
         }
 
-        return Ok(ToResponse(user));
+        return Ok(ToResponse(user, enrollment.Course?.Name));
     }
 
     [HttpDelete("{id}")]
@@ -196,11 +235,38 @@ public sealed class AdminUsersController(
     private static bool IsManagedRole(UserRole role) =>
         role is UserRole.Teacher or UserRole.Student;
 
-    private static UserResponse ToResponse(User user) => new(
+    private async Task<(Course? Course, ObjectResult? Error)> ResolveCourseEnrollment(
+        UserRole role,
+        string? courseId,
+        CancellationToken cancellationToken)
+    {
+        if (role == UserRole.Teacher)
+        {
+            return (null, null);
+        }
+
+        if (string.IsNullOrWhiteSpace(courseId) || !ObjectId.TryParse(courseId, out _))
+        {
+            return (null, BadRequestProblem("A valid course is required for student accounts."));
+        }
+
+        var course = await database.Courses.Find(candidate => candidate.Id == courseId)
+            .FirstOrDefaultAsync(cancellationToken);
+        if (course is null || !course.IsActive)
+        {
+            return (null, BadRequestProblem("The selected course does not exist or is inactive."));
+        }
+
+        return (course, null);
+    }
+
+    private static UserResponse ToResponse(User user, string? courseName) => new(
         user.Id!,
         user.FullName,
         user.Email,
         user.Role,
+        user.CourseId,
+        courseName,
         user.IsActive,
         user.CreatedAt,
         user.UpdatedAt);

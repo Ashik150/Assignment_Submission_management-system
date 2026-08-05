@@ -79,6 +79,7 @@ builder.Services.AddSingleton(serviceProvider =>
 builder.Services.AddSingleton<MongoDbContext>();
 builder.Services.AddSingleton<PasswordHasher>();
 builder.Services.AddSingleton<TokenService>();
+builder.Services.AddSingleton<SubmissionPdfService>();
 builder.Services.AddHostedService<DatabaseInitializer>();
 
 var allowedOrigins = builder.Configuration

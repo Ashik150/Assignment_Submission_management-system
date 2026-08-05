@@ -8,6 +8,7 @@ public sealed record CreateUserRequest(
     [Required, EmailAddress, StringLength(200)] string Email,
     [Required, MinLength(8), MaxLength(100)] string Password,
     [Required] UserRole Role,
+    string? CourseId,
     bool IsActive = true);
 
 public sealed record UpdateUserRequest(
@@ -15,6 +16,7 @@ public sealed record UpdateUserRequest(
     [Required, EmailAddress, StringLength(200)] string Email,
     [MinLength(8), MaxLength(100)] string? Password,
     [Required] UserRole Role,
+    string? CourseId,
     bool IsActive);
 
 public sealed record UserResponse(
@@ -22,6 +24,8 @@ public sealed record UserResponse(
     string FullName,
     string Email,
     UserRole Role,
+    string? CourseId,
+    string? CourseName,
     bool IsActive,
     DateTime CreatedAt,
     DateTime UpdatedAt);

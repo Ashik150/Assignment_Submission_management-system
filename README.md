@@ -1,6 +1,6 @@
 # Assignment & Submission Management System
 
-A full-stack academic management application built with React, TypeScript, ASP.NET Core, and MongoDB. The current implementation delivers secure, role-aware administrator and teacher workspaces for managing people, academic structure, assignments, submissions, marks, and feedback.
+A full-stack academic management application built with React, TypeScript, ASP.NET Core, and MongoDB. It provides secure, role-aware administrator, teacher, and student workspaces for managing people, academic structure, assignments, submissions, marks, and feedback.
 
 ## Implemented features
 
@@ -28,11 +28,26 @@ A full-stack academic management application built with React, TypeScript, ASP.N
 - Provide feedback and change submission status to Submitted, Late, Reviewed, or Returned
 - Responsive assignment and submission review interfaces
 
+### Student portal
+
+- Sign in through the shared login page with credentials created by an administrator
+- View published assignments belonging only to the student's assigned course
+- Search assignments and filter them by subject
+- Read assignment instructions, deadline, maximum marks, and current submission state
+- Submit a written answer, a PDF attachment, or both before the deadline
+- Update written answers and replace or remove PDF attachments while revision remains open
+- View submission history, status, awarded marks, and teacher feedback
+- See whether an assignment is open, submitted, returned for revision, or reviewed
+
 ### Backend safeguards
 
 - PBKDF2-SHA256 password hashing with per-password salts
-- Role authorization on every `/api/admin/*` and `/api/teacher/*` endpoint
+- Role authorization on every `/api/admin/*`, `/api/teacher/*`, and `/api/student/*` endpoint
 - Ownership checks preventing teachers from accessing another teacher's assignments or submissions
+- Course checks preventing students from accessing assignments outside their assigned course
+- Deadline and review-state checks preventing invalid or late answer updates
+- PDF extension, 10 MB size, and file-signature validation before storage
+- Authenticated PDF downloads restricted to the student, assignment teacher, and administrators
 - Request validation and RFC 7807 problem responses
 - Unique MongoDB indexes for user emails, course codes, and subject codes within a course
 - Referential checks that prevent deleting records still used by academic data
@@ -51,14 +66,14 @@ A full-stack academic management application built with React, TypeScript, ASP.N
 Backend/
   Configuration/   Typed application settings
   Contracts/       API request and response models
-  Controllers/     Authentication, admin, and teacher REST endpoints
+  Controllers/     Authentication and role-specific REST endpoints
   Data/            MongoDB collections, indexes, and seed logic
   Models/          MongoDB documents and domain enums
   Services/        Password hashing and token creation
 Frontend/
   src/components/  Reusable role-aware layout, icons, and modal
   src/lib/         API client
-  src/pages/       Admin and teacher dashboards and workflow screens
+  src/pages/       Admin, teacher, and student workflow screens
 ```
 
 ## Local setup
@@ -124,6 +139,10 @@ These are development defaults. Change them through environment variables before
 
 Sign in as the development administrator, open **People**, and create an active Teacher account with an email and temporary password. Then create a course and subject, assign that teacher to the subject, log out, and sign in through the same page with the teacher credentials.
 
+### Create a student login
+
+Sign in as the development administrator, create or select an active course, then open **People** and create an active Student account. Select the student's course and provide an email and temporary password. Log out and use those credentials on the shared login page. The student will see published assignments for that course only.
+
 ## Admin API
 
 All admin routes require `Authorization: Bearer <token>`.
@@ -155,10 +174,28 @@ All teacher routes require a JWT containing the `Teacher` role. Results are rest
 | `GET` | `/api/teacher/submissions/{id}` | Read a submission and student answer |
 | `PUT` | `/api/teacher/submissions/{id}/review` | Save marks, feedback, and submission status |
 
+## Student API
+
+All student routes require a JWT containing the `Student` role. Results are restricted to the authenticated student's assigned course and own submissions.
+
+| Method | Route | Purpose |
+| --- | --- | --- |
+| `GET` | `/api/student/dashboard` | Get assignment and submission totals |
+| `GET` | `/api/student/assignments` | List/search published assignments for the student's course |
+| `GET` | `/api/student/assignments/{id}` | Read assignment details and submission state |
+| `POST` | `/api/student/assignments/{id}/submission` | Submit text and/or a PDF before the deadline |
+| `GET` | `/api/student/submissions` | List the student's submissions, marks, and feedback |
+| `GET` | `/api/student/submissions/{id}` | Read one submission and its review details |
+| `PUT` | `/api/student/submissions/{id}` | Update text and replace/remove an eligible PDF |
+| `GET` | `/api/submissions/{id}/pdf` | Download an authorized submission PDF |
+
+Submission create and update requests use `multipart/form-data`. The `answer` field is optional when a `pdf` is included. PDF files must have a `.pdf` extension, a valid PDF signature, and be no larger than 10 MB. Send `removePdf=true` during an update to remove the existing attachment.
+
 ## MongoDB data model
 
-The database uses separate collections for `users`, `courses`, `subjects`, `assignments`, and `submissions`. Relationships are stored as MongoDB ObjectId references:
+The database uses separate collections for `users`, `courses`, `subjects`, `assignments`, and `submissions`. PDF attachment bytes are stored in the `submission_pdfs` GridFS bucket. Relationships are stored as MongoDB ObjectId references:
 
+- A student user references the course in which they are enrolled.
 - A subject references its course and optionally its assigned teacher.
 - An assignment references its course, subject, and teacher.
 - A submission references its assignment and student.
@@ -184,7 +221,9 @@ npm run build
 - Hard deletion is allowed only for unreferenced records; deactivation preserves academic history.
 - Teachers can only create assignments for active subjects assigned to them and cannot delete assignments that already have submissions.
 - A numeric mark is required when setting a submission to `Reviewed`; `Returned` supports revision requests without a mark.
-- This branch implements the administrator and teacher systems. The student assignment viewing and submission workflow is not included yet.
+- Each student belongs to one course and can only view published assignments assigned to that course.
+- Each student can create one submission per assignment containing text, a PDF, or both. Submissions cannot be created after the deadline.
+- Submitted, Late, or Returned answers can be updated before the deadline; reviewed answers are locked. Updating a returned answer changes its status back to `Submitted` for another teacher review.
 
 ## Security notes
 

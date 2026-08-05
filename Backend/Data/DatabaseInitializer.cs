@@ -41,6 +41,14 @@ public sealed class DatabaseInitializer(
                     .Ascending(subject => subject.Code),
                 new CreateIndexOptions { Unique = true, Name = "uq_subjects_course_code" }),
             cancellationToken: cancellationToken);
+
+        await database.Submissions.Indexes.CreateOneAsync(
+            new CreateIndexModel<Submission>(
+                Builders<Submission>.IndexKeys
+                    .Ascending(submission => submission.AssignmentId)
+                    .Ascending(submission => submission.StudentId),
+                new CreateIndexOptions { Unique = true, Name = "uq_submissions_assignment_student" }),
+            cancellationToken: cancellationToken);
     }
 
     private async Task SeedAdminAsync(CancellationToken cancellationToken)

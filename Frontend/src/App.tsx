@@ -11,6 +11,9 @@ import { SubmissionsPage } from './pages/SubmissionsPage'
 import { TeacherDashboardPage } from './pages/TeacherDashboardPage'
 import { TeacherAssignmentsPage } from './pages/TeacherAssignmentsPage'
 import { TeacherSubmissionsPage } from './pages/TeacherSubmissionsPage'
+import { StudentDashboardPage } from './pages/StudentDashboardPage'
+import { StudentAssignmentsPage } from './pages/StudentAssignmentsPage'
+import { StudentSubmissionsPage } from './pages/StudentSubmissionsPage'
 import type { AuthSession, ViewName } from './types'
 
 const sessionKey = 'onnorokom-admin-session'
@@ -26,7 +29,7 @@ function readSession(): AuthSession | null {
       return null
     }
 
-    return session.user.role === 'Student' ? null : session
+    return session
   } catch {
     localStorage.removeItem(sessionKey)
     return null
@@ -55,6 +58,7 @@ function App() {
   }
 
   const isAdmin = session.user.role === 'Admin'
+  const isTeacher = session.user.role === 'Teacher'
 
   return (
     <WorkspaceLayout
@@ -75,12 +79,18 @@ function App() {
         <AssignmentsPage token={session.token} />
       ) : isAdmin && activeView === 'submissions' ? (
         <SubmissionsPage token={session.token} />
-      ) : activeView === 'dashboard' ? (
+      ) : isTeacher && activeView === 'dashboard' ? (
         <TeacherDashboardPage teacherName={session.user.fullName} token={session.token} onNavigate={setActiveView} />
-      ) : activeView === 'assignments' ? (
+      ) : isTeacher && activeView === 'assignments' ? (
         <TeacherAssignmentsPage token={session.token} />
-      ) : (
+      ) : isTeacher && activeView === 'submissions' ? (
         <TeacherSubmissionsPage token={session.token} />
+      ) : activeView === 'dashboard' ? (
+        <StudentDashboardPage studentName={session.user.fullName} token={session.token} onNavigate={setActiveView} />
+      ) : activeView === 'assignments' ? (
+        <StudentAssignmentsPage token={session.token} />
+      ) : (
+        <StudentSubmissionsPage token={session.token} />
       )}
     </WorkspaceLayout>
   )

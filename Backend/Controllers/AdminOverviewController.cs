@@ -189,6 +189,8 @@ public sealed class AdminOverviewController(MongoDbContext database) : Controlle
                 student?.FullName ?? "Unknown student",
                 student?.Email ?? string.Empty,
                 submission.Answer,
+                submission.PdfFileName,
+                submission.PdfFileSize,
                 submission.Status,
                 submission.Marks,
                 assignment?.MaximumMarks ?? 0,
