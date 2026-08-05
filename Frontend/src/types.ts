@@ -65,6 +65,26 @@ export interface Subject {
   updatedAt: string
 }
 
+export type AssignmentStatus = 'Draft' | 'Published'
+
+export interface AdminAssignment {
+  id: string
+  title: string
+  description: string
+  courseId: string
+  courseName: string
+  subjectId: string
+  subjectName: string
+  teacherId: string
+  teacherName: string
+  deadline: string
+  maximumMarks: number
+  status: AssignmentStatus
+  submissionCount: number
+  createdAt: string
+  updatedAt: string
+}
+
 export interface ProblemDetails {
   title?: string
   detail?: string

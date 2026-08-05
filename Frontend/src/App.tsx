@@ -6,6 +6,7 @@ import { DashboardPage } from './pages/DashboardPage'
 import { UsersPage } from './pages/UsersPage'
 import { CoursesPage } from './pages/CoursesPage'
 import { SubjectsPage } from './pages/SubjectsPage'
+import { AssignmentsPage } from './pages/AssignmentsPage'
 import type { AuthSession, ViewName } from './types'
 
 const sessionKey = 'onnorokom-admin-session'
@@ -60,6 +61,8 @@ function App() {
         <CoursesPage token={session.token} />
       ) : activeView === 'subjects' ? (
         <SubjectsPage token={session.token} />
+      ) : activeView === 'assignments' ? (
+        <AssignmentsPage token={session.token} />
       ) : (
         <section className="empty-state panel">
           <span className="eyebrow">Coming next</span>
