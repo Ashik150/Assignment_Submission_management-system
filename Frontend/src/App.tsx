@@ -7,6 +7,7 @@ import { UsersPage } from './pages/UsersPage'
 import { CoursesPage } from './pages/CoursesPage'
 import { SubjectsPage } from './pages/SubjectsPage'
 import { AssignmentsPage } from './pages/AssignmentsPage'
+import { SubmissionsPage } from './pages/SubmissionsPage'
 import type { AuthSession, ViewName } from './types'
 
 const sessionKey = 'onnorokom-admin-session'
@@ -63,12 +64,10 @@ function App() {
         <SubjectsPage token={session.token} />
       ) : activeView === 'assignments' ? (
         <AssignmentsPage token={session.token} />
+      ) : activeView === 'submissions' ? (
+        <SubmissionsPage token={session.token} />
       ) : (
-        <section className="empty-state panel">
-          <span className="eyebrow">Coming next</span>
-          <h2>{activeView[0].toUpperCase() + activeView.slice(1)}</h2>
-          <p>This workspace is ready for its management tools.</p>
-        </section>
+        <DashboardPage token={session.token} onNavigate={setActiveView} />
       )}
     </AdminLayout>
   )

@@ -85,6 +85,25 @@ export interface AdminAssignment {
   updatedAt: string
 }
 
+export type SubmissionStatus = 'Submitted' | 'Late' | 'Reviewed' | 'Returned'
+
+export interface AdminSubmission {
+  id: string
+  assignmentId: string
+  assignmentTitle: string
+  studentId: string
+  studentName: string
+  studentEmail: string
+  answer: string
+  status: SubmissionStatus
+  marks: number | null
+  maximumMarks: number
+  feedback: string
+  submittedAt: string
+  reviewedAt: string | null
+  updatedAt: string
+}
+
 export interface ProblemDetails {
   title?: string
   detail?: string
