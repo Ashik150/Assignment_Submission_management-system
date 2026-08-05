@@ -44,6 +44,8 @@ export interface ManagedUser {
   fullName: string
   email: string
   role: Exclude<UserRole, 'Admin'>
+  courseId: string | null
+  courseName: string | null
   isActive: boolean
   createdAt: string
   updatedAt: string
