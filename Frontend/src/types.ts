@@ -52,6 +52,19 @@ export interface Course {
   updatedAt: string
 }
 
+export interface Subject {
+  id: string
+  name: string
+  code: string
+  courseId: string
+  courseName: string
+  teacherId: string | null
+  teacherName: string | null
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+}
+
 export interface ProblemDetails {
   title?: string
   detail?: string
