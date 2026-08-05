@@ -8,8 +8,8 @@ interface LoginPageProps {
 }
 
 export function LoginPage({ onAuthenticated }: LoginPageProps) {
-  const [email, setEmail] = useState('admin@example.com')
-  const [password, setPassword] = useState('Admin123!')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
@@ -39,15 +39,15 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
         <div className="story-stat"><strong>Clear oversight.</strong><span>Every academic workflow, connected.</span></div>
       </section>
       <section className="login-form-wrap">
-        <form className="login-card" onSubmit={submit}>
+        <form autoComplete="off" className="login-card" onSubmit={submit}>
           <div>
             <span className="eyebrow">Welcome back</span>
             <h2>Sign in to your workspace</h2>
             <p>Use your administrator, teacher, or student credentials to continue.</p>
           </div>
           {error && <div className="alert error" role="alert">{error}</div>}
-          <label>Email address<input autoComplete="email" onChange={(event) => setEmail(event.target.value)} required type="email" value={email} /></label>
-          <label>Password<input autoComplete="current-password" minLength={8} onChange={(event) => setPassword(event.target.value)} required type="password" value={password} /></label>
+          <label>Email address<input autoComplete="off" onChange={(event) => setEmail(event.target.value)} required type="email" value={email} /></label>
+          <label>Password<input autoComplete="off" minLength={8} onChange={(event) => setPassword(event.target.value)} required type="password" value={password} /></label>
           <button className="primary-button wide" disabled={submitting} type="submit">
             {submitting ? 'Signing in…' : 'Sign in'} <Icon name="arrow" size={18} />
           </button>
