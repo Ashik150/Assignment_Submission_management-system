@@ -4,6 +4,7 @@ import { AdminLayout } from './components/AdminLayout'
 import { LoginPage } from './pages/LoginPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { UsersPage } from './pages/UsersPage'
+import { CoursesPage } from './pages/CoursesPage'
 import type { AuthSession, ViewName } from './types'
 
 const sessionKey = 'onnorokom-admin-session'
@@ -54,6 +55,8 @@ function App() {
         <DashboardPage token={session.token} onNavigate={setActiveView} />
       ) : activeView === 'users' ? (
         <UsersPage token={session.token} />
+      ) : activeView === 'courses' ? (
+        <CoursesPage token={session.token} />
       ) : (
         <section className="empty-state panel">
           <span className="eyebrow">Coming next</span>

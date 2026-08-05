@@ -41,6 +41,17 @@ export interface ManagedUser {
   updatedAt: string
 }
 
+export interface Course {
+  id: string
+  name: string
+  code: string
+  description: string
+  isActive: boolean
+  subjectCount: number
+  createdAt: string
+  updatedAt: string
+}
+
 export interface ProblemDetails {
   title?: string
   detail?: string
