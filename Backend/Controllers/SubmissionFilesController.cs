@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Backend.Data;
 using Backend.Models;
+using Backend.Rules;
 using Backend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -54,25 +55,20 @@ public sealed class SubmissionFilesController(
     private async Task<bool> CanAccess(Submission submission, CancellationToken cancellationToken)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var role = User.FindFirstValue(ClaimTypes.Role);
-
-        if (role == nameof(UserRole.Admin))
-        {
-            return true;
-        }
-
-        if (role == nameof(UserRole.Student))
-        {
-            return submission.StudentId == userId;
-        }
-
-        if (role != nameof(UserRole.Teacher))
+        var roleClaim = User.FindFirstValue(ClaimTypes.Role);
+        if (!Enum.TryParse<UserRole>(roleClaim, out var role))
         {
             return false;
         }
 
-        return await database.Assignments.Find(assignment =>
-                assignment.Id == submission.AssignmentId && assignment.TeacherId == userId)
-            .AnyAsync(cancellationToken);
+        if (role != UserRole.Teacher)
+        {
+            return SubmissionAuthorizationRules.CanDownloadPdf(role, userId, submission);
+        }
+
+        var assignment = await database.Assignments.Find(candidate =>
+                candidate.Id == submission.AssignmentId)
+            .FirstOrDefaultAsync(cancellationToken);
+        return SubmissionAuthorizationRules.CanDownloadPdf(role, userId, submission, assignment);
     }
 }

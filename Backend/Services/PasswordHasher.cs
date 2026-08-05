@@ -20,7 +20,10 @@ public sealed class PasswordHasher
     public bool Verify(string password, string storedHash)
     {
         var parts = storedHash.Split('.', 3);
-        if (parts.Length != 3 || !int.TryParse(parts[0], out var iterations))
+        if (parts.Length != 3 ||
+            !int.TryParse(parts[0], out var iterations) ||
+            iterations <= 0 ||
+            iterations > 1_000_000)
         {
             return false;
         }
@@ -29,6 +32,11 @@ public sealed class PasswordHasher
         {
             var salt = Convert.FromBase64String(parts[1]);
             var expectedHash = Convert.FromBase64String(parts[2]);
+            if (salt.Length < 8 || expectedHash.Length is < 16 or > 128)
+            {
+                return false;
+            }
+
             var actualHash = Rfc2898DeriveBytes.Pbkdf2(
                 password, salt, iterations, HashAlgorithmName.SHA256, expectedHash.Length);
 

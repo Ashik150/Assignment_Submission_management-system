@@ -37,6 +37,9 @@ public sealed class PasswordHasherTests
     [InlineData("")]
     [InlineData("not-a-password-hash")]
     [InlineData("iterations.invalid-base64.invalid-base64")]
+    [InlineData("0.YWJjZGVmZ2hpamtsbW5vcA==.YWJjZGVmZ2hpamtsbW5vcA==")]
+    [InlineData("1000001.YWJjZGVmZ2hpamtsbW5vcA==.YWJjZGVmZ2hpamtsbW5vcA==")]
+    [InlineData("120000.YQ==.YQ==")]
     public void Verify_RejectsMalformedStoredHashes(string storedHash)
     {
         Assert.False(hasher.Verify("AnyPassword123!", storedHash));
