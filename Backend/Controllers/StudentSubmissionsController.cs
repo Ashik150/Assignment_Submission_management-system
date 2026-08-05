@@ -107,7 +107,7 @@ public sealed class StudentSubmissionsController(
             return ConflictProblem("The deadline has passed and this assignment no longer accepts submissions.");
         }
 
-        var answer = request.Answer.Trim();
+        var answer = request.Answer?.Trim() ?? string.Empty;
         if (answer.Length == 0 && request.Pdf is null)
         {
             return InvalidRequest("Write an answer, attach a PDF, or provide both.");
@@ -203,7 +203,7 @@ public sealed class StudentSubmissionsController(
             return ConflictProblem("A reviewed submission cannot be updated.");
         }
 
-        var answer = request.Answer.Trim();
+        var answer = request.Answer?.Trim() ?? string.Empty;
         var keepsExistingPdf = request.Pdf is null && !request.RemovePdf && submission.PdfFileId is not null;
         if (answer.Length == 0 && request.Pdf is null && !keepsExistingPdf)
         {

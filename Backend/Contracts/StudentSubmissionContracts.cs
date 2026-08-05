@@ -6,7 +6,7 @@ namespace Backend.Contracts;
 public sealed class SubmitAnswerRequest
 {
     [StringLength(10000)]
-    public string Answer { get; init; } = string.Empty;
+    public string? Answer { get; init; }
 
     public IFormFile? Pdf { get; init; }
 
