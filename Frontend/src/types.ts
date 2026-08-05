@@ -39,6 +39,15 @@ export interface TeacherDashboardSummary {
   pendingReviews: number
 }
 
+export interface StudentDashboardSummary {
+  courseId: string
+  courseName: string
+  availableAssignments: number
+  dueThisWeek: number
+  submittedAssignments: number
+  awaitingSubmission: number
+}
+
 export interface ManagedUser {
   id: string
   fullName: string

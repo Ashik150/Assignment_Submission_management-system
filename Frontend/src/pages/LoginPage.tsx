@@ -19,10 +19,6 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
     setSubmitting(true)
     try {
       const session = await login(email, password)
-      if (session.user.role === 'Student') {
-        setError('The student workspace is not available yet.')
-        return
-      }
       onAuthenticated(session)
     } catch (requestError) {
       setError(requestError instanceof ApiError ? requestError.message : 'Unable to reach the API.')
@@ -47,7 +43,7 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
           <div>
             <span className="eyebrow">Welcome back</span>
             <h2>Sign in to your workspace</h2>
-            <p>Use your administrator or teacher credentials to continue.</p>
+            <p>Use your administrator, teacher, or student credentials to continue.</p>
           </div>
           {error && <div className="alert error" role="alert">{error}</div>}
           <label>Email address<input autoComplete="email" onChange={(event) => setEmail(event.target.value)} required type="email" value={email} /></label>

@@ -84,6 +84,7 @@
 .review-card { align-items: flex-start; display: grid; gap: 17px; grid-template-columns: auto 1fr; }
 .review-card > div { display: flex; flex-direction: column; }.review-card strong { font-family: Manrope, sans-serif; font-size: 2rem; }.review-card p { color: var(--muted); font-size: .84rem; margin: 2px 0 0; }.review-card .text-button { grid-column: 2; justify-self: start; }
 .teacher-action-card { align-items: flex-start; display: grid; gap: 17px; grid-template-columns: auto 1fr; padding: 27px; }.teacher-action-card h2 { font-family: Manrope, sans-serif; font-size: 1.15rem; margin-bottom: 7px; }.teacher-action-card p { color: var(--muted); font-size: .84rem; line-height: 1.55; margin: 0; }.teacher-action-card .text-button { grid-column: 2; justify-self: start; }
+.course-banner { align-items: center; background: linear-gradient(100deg, #f0edff, #f8f7ff); border: 1px solid #e4dfff; border-radius: 14px; display: flex; gap: 13px; margin-bottom: 17px; padding: 14px 17px; }.course-banner > div { display: flex; flex-direction: column; }.course-banner span { color: var(--muted); font-size: .68rem; font-weight: 700; }.course-banner strong { color: var(--ink); font-family: Manrope, sans-serif; font-size: .96rem; margin-top: 2px; }
 .empty-state { padding: 70px 30px; text-align: center; }.empty-state h2 { font-family: Manrope, sans-serif; margin-bottom: 7px; }.empty-state p { color: var(--muted); }
 .menu-scrim { display: none; }
 .page-alert { margin-bottom: 18px; }

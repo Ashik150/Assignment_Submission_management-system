@@ -31,10 +31,18 @@ const teacherNavigation: NavigationItem[] = [
   { label: 'Submissions', icon: 'submissions', view: 'submissions' },
 ]
 
+const studentNavigation: NavigationItem[] = [
+  { label: 'Dashboard', icon: 'dashboard', view: 'dashboard' },
+  { label: 'Assignments', icon: 'assignments', view: 'assignments' },
+  { label: 'My submissions', icon: 'submissions', view: 'submissions' },
+]
+
 export function WorkspaceLayout({ activeView, children, onLogout, onNavigate, user }: WorkspaceLayoutProps) {
   const [menuOpen, setMenuOpen] = useState(false)
   const isAdmin = user.role === 'Admin'
-  const navigation = isAdmin ? adminNavigation : teacherNavigation
+  const isTeacher = user.role === 'Teacher'
+  const navigation = isAdmin ? adminNavigation : isTeacher ? teacherNavigation : studentNavigation
+  const workspaceName = isAdmin ? 'Admin' : isTeacher ? 'Teacher' : 'Student'
   const navigate = (view: ViewName) => {
     onNavigate(view)
     setMenuOpen(false)
@@ -45,7 +53,7 @@ export function WorkspaceLayout({ activeView, children, onLogout, onNavigate, us
       <aside className={`sidebar ${menuOpen ? 'sidebar-open' : ''}`}>
         <div className="brand">
           <span className="brand-mark"><Icon name="school" size={25} /></span>
-          <span><strong>Shikkha</strong><small>{isAdmin ? 'Admin workspace' : 'Teacher workspace'}</small></span>
+          <span><strong>Shikkha</strong><small>{workspaceName} workspace</small></span>
         </div>
         <nav aria-label={`${user.role} navigation`}>
           <span className="nav-label">Workspace</span>
@@ -76,10 +84,10 @@ export function WorkspaceLayout({ activeView, children, onLogout, onNavigate, us
             <Icon name="menu" />
           </button>
           <div>
-            <span className="topbar-label">{isAdmin ? 'Admin portal' : 'Teacher portal'}</span>
+            <span className="topbar-label">{workspaceName} portal</span>
             <strong>{navigation.find((item) => item.view === activeView)?.label}</strong>
           </div>
-          <span className="role-chip">{isAdmin ? 'Administrator' : 'Teacher'}</span>
+          <span className="role-chip">{isAdmin ? 'Administrator' : workspaceName}</span>
         </header>
         <main className="content">{children}</main>
       </div>
