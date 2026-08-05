@@ -204,11 +204,6 @@ public sealed class TeacherAssignmentsController(MongoDbContext database) : Cont
         }
 
         var deadline = request.Deadline.ToUniversalTime();
-        if (deadline != assignment.Deadline && deadline <= DateTime.UtcNow)
-        {
-            return InvalidRequest("A changed assignment deadline must be in the future.");
-        }
-
         var relation = await ResolveAssignedSubject(
             request.CourseId,
             request.SubjectId,
