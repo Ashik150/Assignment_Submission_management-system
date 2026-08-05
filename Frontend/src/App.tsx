@@ -10,6 +10,7 @@ import { AssignmentsPage } from './pages/AssignmentsPage'
 import { SubmissionsPage } from './pages/SubmissionsPage'
 import { TeacherDashboardPage } from './pages/TeacherDashboardPage'
 import { TeacherAssignmentsPage } from './pages/TeacherAssignmentsPage'
+import { TeacherSubmissionsPage } from './pages/TeacherSubmissionsPage'
 import type { AuthSession, ViewName } from './types'
 
 const sessionKey = 'onnorokom-admin-session'
@@ -79,7 +80,7 @@ function App() {
       ) : activeView === 'assignments' ? (
         <TeacherAssignmentsPage token={session.token} />
       ) : (
-        <section className="empty-state panel"><span className="eyebrow">Teacher workspace</span><h2>Student submissions</h2><p>This teaching tool is being prepared.</p></section>
+        <TeacherSubmissionsPage token={session.token} />
       )}
     </WorkspaceLayout>
   )
