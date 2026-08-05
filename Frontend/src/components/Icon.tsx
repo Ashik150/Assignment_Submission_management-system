@@ -14,6 +14,7 @@ interface IconProps {
     | 'edit'
     | 'trash'
     | 'search'
+    | 'download'
     | 'close'
   size?: number
 }
@@ -34,6 +35,7 @@ export function Icon({ name, size = 20 }: IconProps) {
     edit: <><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z"/></>,
     trash: <><path d="M3 6h18M8 6V4h8v2M19 6l-1 15H6L5 6M10 11v6M14 11v6"/></>,
     search: <><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></>,
+    download: <><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5M12 15V3"/></>,
     close: <><path d="M18 6 6 18M6 6l12 12"/></>,
   }
 

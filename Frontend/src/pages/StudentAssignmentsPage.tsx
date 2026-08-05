@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Icon } from '../components/Icon'
 import { Modal } from '../components/Modal'
+import { PdfAttachment } from '../components/PdfAttachment'
 import { ApiError, apiRequest } from '../lib/api'
 import type { StudentAssignment, StudentSubmission } from '../types'
 
@@ -13,6 +14,8 @@ export function StudentAssignmentsPage({ token }: StudentAssignmentsPageProps) {
   const [selected, setSelected] = useState<StudentAssignment | null>(null)
   const [submission, setSubmission] = useState<StudentSubmission | null>(null)
   const [answer, setAnswer] = useState('')
+  const [pdf, setPdf] = useState<File | null>(null)
+  const [removePdf, setRemovePdf] = useState(false)
   const [loading, setLoading] = useState(true)
   const [loadingDetail, setLoadingDetail] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -48,6 +51,8 @@ export function StudentAssignmentsPage({ token }: StudentAssignmentsPageProps) {
     setSelected(assignment)
     setSubmission(null)
     setAnswer('')
+    setPdf(null)
+    setRemovePdf(false)
     setError('')
     if (!assignment.submissionId) return
 
@@ -72,12 +77,22 @@ export function StudentAssignmentsPage({ token }: StudentAssignmentsPageProps) {
     if (!selected) return
     setSaving(true)
     setError('')
+    if (!answer.trim() && !pdf && (!submission?.pdfFileName || removePdf)) {
+      setError('Write an answer, attach a PDF, or provide both.')
+      setSaving(false)
+      return
+    }
+
+    const formData = new FormData()
+    formData.append('answer', answer)
+    if (pdf) formData.append('pdf', pdf)
+    if (removePdf) formData.append('removePdf', 'true')
     try {
       await apiRequest<StudentSubmission>(
         submission
           ? `/api/student/submissions/${submission.id}`
           : `/api/student/assignments/${selected.id}/submission`,
-        { method: submission ? 'PUT' : 'POST', body: JSON.stringify({ answer }) },
+        { method: submission ? 'PUT' : 'POST', body: formData },
         token,
       )
       setSelected(null)
@@ -120,7 +135,7 @@ export function StudentAssignmentsPage({ token }: StudentAssignmentsPageProps) {
           <div className="detail-meta assignment-meta"><div><span>Deadline</span><strong>{new Date(selected.deadline).toLocaleString()}</strong></div><div><span>Maximum marks</span><strong>{selected.maximumMarks}</strong></div></div>
           <section><span className="detail-label">Instructions</span><p>{selected.description || 'No additional instructions were provided.'}</p></section>
           {selected.submissionStatus && <section className="current-result"><span className="detail-label">Current submission</span><div><span className={`submission-status ${selected.submissionStatus.toLowerCase()}`}>{selected.submissionStatus}</span>{selected.marks !== null && <strong>{selected.marks} / {selected.maximumMarks}</strong>}</div>{selected.feedback && <p><strong>Teacher feedback:</strong> {selected.feedback}</p>}</section>}
-          {loadingDetail ? <div className="table-message compact">Loading your answer…</div> : (selected.canSubmit || selected.canUpdateSubmission) && <form className="answer-form" onSubmit={saveAnswer}><label>{submission ? 'Update your answer' : 'Your answer'}<textarea autoFocus maxLength={10000} minLength={1} onChange={(event) => setAnswer(event.target.value)} placeholder="Write your answer here…" required rows={8} value={answer} /></label>{error && <div className="alert error" role="alert">{error}</div>}<footer className="form-actions"><button className="secondary-button" onClick={() => setSelected(null)} type="button">Cancel</button><button className="primary-button" disabled={saving} type="submit">{saving ? 'Saving…' : submission ? 'Update submission' : 'Submit answer'}</button></footer></form>}
+          {loadingDetail ? <div className="table-message compact">Loading your answer…</div> : (selected.canSubmit || selected.canUpdateSubmission) && <form className="answer-form" onSubmit={saveAnswer}><label>{submission ? 'Update your written answer (optional)' : 'Written answer (optional)'}<textarea autoFocus maxLength={10000} onChange={(event) => setAnswer(event.target.value)} placeholder="Write your answer here, attach a PDF below, or do both…" rows={7} value={answer} /></label><div className="pdf-upload"><label>PDF attachment (optional)<input accept=".pdf,application/pdf" onChange={(event) => { const file = event.target.files?.[0] ?? null; if (file && file.size > 10 * 1024 * 1024) { setError('The PDF must be 10 MB or smaller.'); event.target.value = ''; setPdf(null); return } setError(''); setPdf(file); if (file) setRemovePdf(false) }} type="file" /></label><small>PDF only, maximum 10 MB.</small>{submission?.pdfFileName && submission.pdfFileSize !== null && !pdf && <>{!removePdf && <PdfAttachment fileName={submission.pdfFileName} fileSize={submission.pdfFileSize} submissionId={submission.id} token={token} />}<label className="remove-file"><input checked={removePdf} onChange={(event) => setRemovePdf(event.target.checked)} type="checkbox" /> Remove the current PDF</label></>}</div>{error && <div className="alert error" role="alert">{error}</div>}<footer className="form-actions"><button className="secondary-button" onClick={() => setSelected(null)} type="button">Cancel</button><button className="primary-button" disabled={saving} type="submit">{saving ? 'Saving…' : submission ? 'Update submission' : 'Submit answer'}</button></footer></form>}
           {!loadingDetail && !selected.canSubmit && !selected.canUpdateSubmission && !selected.submissionId && <div className="alert info detail-notice">The deadline has passed. This assignment no longer accepts submissions.</div>}
         </div>
       </Modal>}

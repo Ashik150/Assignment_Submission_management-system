@@ -161,6 +161,8 @@ export interface AdminSubmission {
   studentName: string
   studentEmail: string
   answer: string
+  pdfFileName: string | null
+  pdfFileSize: number | null
   status: SubmissionStatus
   marks: number | null
   maximumMarks: number
@@ -177,6 +179,8 @@ export interface StudentSubmission {
   subjectId: string
   subjectName: string
   answer: string
+  pdfFileName: string | null
+  pdfFileSize: number | null
   status: SubmissionStatus
   marks: number | null
   maximumMarks: number
