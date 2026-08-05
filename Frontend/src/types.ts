@@ -31,6 +31,14 @@ export interface DashboardSummary {
   pendingReviews: number
 }
 
+export interface TeacherDashboardSummary {
+  assignedSubjects: number
+  assignments: number
+  publishedAssignments: number
+  submissions: number
+  pendingReviews: number
+}
+
 export interface ManagedUser {
   id: string
   fullName: string

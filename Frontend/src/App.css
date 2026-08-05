@@ -84,6 +84,7 @@
 .activity-numbers span { color: var(--muted); font-size: .8rem; }.activity-numbers strong { font-family: Manrope, sans-serif; font-size: 1.55rem; }.activity-numbers .icon { grid-column: 2; grid-row: 1 / 3; }
 .review-card { align-items: flex-start; display: grid; gap: 17px; grid-template-columns: auto 1fr; }
 .review-card > div { display: flex; flex-direction: column; }.review-card strong { font-family: Manrope, sans-serif; font-size: 2rem; }.review-card p { color: var(--muted); font-size: .84rem; margin: 2px 0 0; }.review-card .text-button { grid-column: 2; justify-self: start; }
+.teacher-action-card { align-items: flex-start; display: grid; gap: 17px; grid-template-columns: auto 1fr; padding: 27px; }.teacher-action-card h2 { font-family: Manrope, sans-serif; font-size: 1.15rem; margin-bottom: 7px; }.teacher-action-card p { color: var(--muted); font-size: .84rem; line-height: 1.55; margin: 0; }.teacher-action-card .text-button { grid-column: 2; justify-self: start; }
 .empty-state { padding: 70px 30px; text-align: center; }.empty-state h2 { font-family: Manrope, sans-serif; margin-bottom: 7px; }.empty-state p { color: var(--muted); }
 .menu-scrim { display: none; }
 .page-alert { margin-bottom: 18px; }
