@@ -38,11 +38,10 @@
 .login-form-wrap { align-items: center; background: #fbfbfd; display: flex; justify-content: center; padding: 48px; }
 .login-card { display: flex; flex-direction: column; gap: 22px; max-width: 420px; width: 100%; }
 .login-card h2 { font-family: Manrope, sans-serif; font-size: 2rem; letter-spacing: -.035em; margin-bottom: 8px; }
-.login-card > div > p, .demo-note { color: var(--muted); line-height: 1.55; }
+.login-card > div > p { color: var(--muted); line-height: 1.55; }
 .login-card label { color: #394052; display: flex; flex-direction: column; font-size: .86rem; font-weight: 700; gap: 8px; }
 .login-card input { background: white; border: 1px solid #dfe2ea; border-radius: 11px; color: var(--ink); outline: none; padding: 13px 14px; transition: border .2s, box-shadow .2s; }
 .login-card input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(96,70,216,.12); }
-.demo-note { background: #f0eefb; border-radius: 11px; font-size: .82rem; padding: 12px 14px; text-align: center; }
 
 .admin-app { background: var(--canvas); display: flex; min-height: 100vh; }
 .sidebar { background: var(--sidebar); color: white; display: flex; flex-direction: column; height: 100vh; padding: 28px 20px 20px; position: fixed; width: 260px; z-index: 30; }

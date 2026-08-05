@@ -55,7 +55,6 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
           <button className="primary-button wide" disabled={submitting} type="submit">
             {submitting ? 'Signing in…' : 'Sign in'} <Icon name="arrow" size={18} />
           </button>
-          <p className="demo-note"><strong>Administrator demo</strong><br />admin@example.com · Admin123!<br /><span>Teachers use credentials created by an administrator.</span></p>
         </form>
       </section>
     </main>
