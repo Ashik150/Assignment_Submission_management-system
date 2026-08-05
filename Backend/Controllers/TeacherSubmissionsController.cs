@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Backend.Contracts;
 using Backend.Data;
 using Backend.Models;
+using Backend.Rules;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Bson;
@@ -128,24 +129,32 @@ public sealed class TeacherSubmissionsController(MongoDbContext database) : Cont
             return SubmissionNotFound();
         }
 
-        if (request.Marks > assignment.MaximumMarks)
+        var reviewFailure = SubmissionRules.GetReviewFailure(
+            assignment,
+            request.Marks,
+            request.Status);
+        if (reviewFailure == SubmissionReviewFailure.MarksBelowZero)
+        {
+            return InvalidRequest("Marks cannot be below zero.");
+        }
+
+        if (reviewFailure == SubmissionReviewFailure.MarksExceedMaximum)
         {
             return InvalidRequest(
                 $"Marks cannot exceed the assignment maximum of {assignment.MaximumMarks}.");
         }
 
-        if (request.Status == SubmissionStatus.Reviewed && request.Marks is null)
+        if (reviewFailure == SubmissionReviewFailure.ReviewedMarksRequired)
         {
             return InvalidRequest("A mark is required when a submission is set to Reviewed.");
         }
 
-        submission.Marks = request.Marks;
-        submission.Feedback = request.Feedback.Trim();
-        submission.Status = request.Status;
-        submission.ReviewedAt = request.Status is SubmissionStatus.Reviewed or SubmissionStatus.Returned
-            ? DateTime.UtcNow
-            : null;
-        submission.UpdatedAt = DateTime.UtcNow;
+        SubmissionRules.ApplyReview(
+            submission,
+            request.Marks,
+            request.Feedback,
+            request.Status,
+            DateTime.UtcNow);
 
         await database.Submissions.ReplaceOneAsync(
             candidate => candidate.Id == id,
