@@ -10,6 +10,11 @@ interface IconProps {
     | 'menu'
     | 'arrow'
     | 'school'
+    | 'plus'
+    | 'edit'
+    | 'trash'
+    | 'search'
+    | 'close'
   size?: number
 }
 
@@ -25,6 +30,11 @@ export function Icon({ name, size = 20 }: IconProps) {
     menu: <><path d="M4 6h16M4 12h16M4 18h16"/></>,
     arrow: <><path d="m9 18 6-6-6-6"/></>,
     school: <><path d="m3 10 9-5 9 5-9 5-9-5Z"/><path d="m7 12.5v4.25C9.5 19 14.5 19 17 16.75V12.5M21 10v6"/></>,
+    plus: <><path d="M12 5v14M5 12h14"/></>,
+    edit: <><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z"/></>,
+    trash: <><path d="M3 6h18M8 6V4h8v2M19 6l-1 15H6L5 6M10 11v6M14 11v6"/></>,
+    search: <><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></>,
+    close: <><path d="M18 6 6 18M6 6l12 12"/></>,
   }
 
   return (

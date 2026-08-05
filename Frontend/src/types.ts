@@ -31,6 +31,16 @@ export interface DashboardSummary {
   pendingReviews: number
 }
 
+export interface ManagedUser {
+  id: string
+  fullName: string
+  email: string
+  role: Exclude<UserRole, 'Admin'>
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+}
+
 export interface ProblemDetails {
   title?: string
   detail?: string
