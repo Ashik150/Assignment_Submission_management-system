@@ -124,6 +124,20 @@ public sealed class AdminUsersController(
             return NotFoundProblem("User not found.");
         }
 
+        if (user.Role != request.Role)
+        {
+            var hasRoleSpecificRecords = user.Role == UserRole.Teacher
+                ? await database.Subjects.Find(subject => subject.TeacherId == id).AnyAsync(cancellationToken) ||
+                  await database.Assignments.Find(assignment => assignment.TeacherId == id).AnyAsync(cancellationToken)
+                : await database.Submissions.Find(submission => submission.StudentId == id).AnyAsync(cancellationToken);
+
+            if (hasRoleSpecificRecords)
+            {
+                return ConflictProblem(
+                    "This user's role cannot be changed while role-specific academic records reference the account.");
+            }
+        }
+
         user.FullName = request.FullName.Trim();
         user.Email = request.Email.Trim().ToLowerInvariant();
         user.Role = request.Role;
