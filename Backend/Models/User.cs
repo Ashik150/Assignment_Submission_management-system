@@ -18,6 +18,10 @@ public sealed class User
     [BsonRepresentation(BsonType.String)]
     public UserRole Role { get; set; }
 
+    [BsonRepresentation(BsonType.ObjectId)]
+    [BsonIgnoreIfNull]
+    public string? CourseId { get; set; }
+
     public bool IsActive { get; set; } = true;
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
