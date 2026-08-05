@@ -130,6 +130,27 @@ export interface TeacherAssignment {
   updatedAt: string
 }
 
+export interface StudentAssignment {
+  id: string
+  title: string
+  description: string
+  courseId: string
+  courseName: string
+  subjectId: string
+  subjectName: string
+  teacherId: string
+  teacherName: string
+  deadline: string
+  maximumMarks: number
+  createdAt: string
+  submissionId: string | null
+  submissionStatus: SubmissionStatus | null
+  marks: number | null
+  feedback: string | null
+  canSubmit: boolean
+  canUpdateSubmission: boolean
+}
+
 export type SubmissionStatus = 'Submitted' | 'Late' | 'Reviewed' | 'Returned'
 
 export interface AdminSubmission {
@@ -147,6 +168,24 @@ export interface AdminSubmission {
   submittedAt: string
   reviewedAt: string | null
   updatedAt: string
+}
+
+export interface StudentSubmission {
+  id: string
+  assignmentId: string
+  assignmentTitle: string
+  subjectId: string
+  subjectName: string
+  answer: string
+  status: SubmissionStatus
+  marks: number | null
+  maximumMarks: number
+  feedback: string
+  deadline: string
+  submittedAt: string
+  reviewedAt: string | null
+  updatedAt: string
+  canUpdate: boolean
 }
 
 export interface ProblemDetails {
