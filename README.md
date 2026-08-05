@@ -34,8 +34,8 @@ A full-stack academic management application built with React, TypeScript, ASP.N
 - View published assignments belonging only to the student's assigned course
 - Search assignments and filter them by subject
 - Read assignment instructions, deadline, maximum marks, and current submission state
-- Submit one text answer per assignment before its deadline
-- Update an answer before the deadline while the submission remains open for revision
+- Submit a written answer, a PDF attachment, or both before the deadline
+- Update written answers and replace or remove PDF attachments while revision remains open
 - View submission history, status, awarded marks, and teacher feedback
 - See whether an assignment is open, submitted, returned for revision, or reviewed
 
@@ -46,6 +46,8 @@ A full-stack academic management application built with React, TypeScript, ASP.N
 - Ownership checks preventing teachers from accessing another teacher's assignments or submissions
 - Course checks preventing students from accessing assignments outside their assigned course
 - Deadline and review-state checks preventing invalid or late answer updates
+- PDF extension, 10 MB size, and file-signature validation before storage
+- Authenticated PDF downloads restricted to the student, assignment teacher, and administrators
 - Request validation and RFC 7807 problem responses
 - Unique MongoDB indexes for user emails, course codes, and subject codes within a course
 - Referential checks that prevent deleting records still used by academic data
@@ -181,14 +183,17 @@ All student routes require a JWT containing the `Student` role. Results are rest
 | `GET` | `/api/student/dashboard` | Get assignment and submission totals |
 | `GET` | `/api/student/assignments` | List/search published assignments for the student's course |
 | `GET` | `/api/student/assignments/{id}` | Read assignment details and submission state |
-| `POST` | `/api/student/assignments/{id}/submission` | Submit an answer before the deadline |
+| `POST` | `/api/student/assignments/{id}/submission` | Submit text and/or a PDF before the deadline |
 | `GET` | `/api/student/submissions` | List the student's submissions, marks, and feedback |
 | `GET` | `/api/student/submissions/{id}` | Read one submission and its review details |
-| `PUT` | `/api/student/submissions/{id}` | Update an eligible answer before the deadline |
+| `PUT` | `/api/student/submissions/{id}` | Update text and replace/remove an eligible PDF |
+| `GET` | `/api/submissions/{id}/pdf` | Download an authorized submission PDF |
+
+Submission create and update requests use `multipart/form-data`. The `answer` field is optional when a `pdf` is included. PDF files must have a `.pdf` extension, a valid PDF signature, and be no larger than 10 MB. Send `removePdf=true` during an update to remove the existing attachment.
 
 ## MongoDB data model
 
-The database uses separate collections for `users`, `courses`, `subjects`, `assignments`, and `submissions`. Relationships are stored as MongoDB ObjectId references:
+The database uses separate collections for `users`, `courses`, `subjects`, `assignments`, and `submissions`. PDF attachment bytes are stored in the `submission_pdfs` GridFS bucket. Relationships are stored as MongoDB ObjectId references:
 
 - A student user references the course in which they are enrolled.
 - A subject references its course and optionally its assigned teacher.
@@ -217,7 +222,7 @@ npm run build
 - Teachers can only create assignments for active subjects assigned to them and cannot delete assignments that already have submissions.
 - A numeric mark is required when setting a submission to `Reviewed`; `Returned` supports revision requests without a mark.
 - Each student belongs to one course and can only view published assignments assigned to that course.
-- Each student can create one submission per assignment. Answers cannot be created after the deadline.
+- Each student can create one submission per assignment containing text, a PDF, or both. Submissions cannot be created after the deadline.
 - Submitted, Late, or Returned answers can be updated before the deadline; reviewed answers are locked. Updating a returned answer changes its status back to `Submitted` for another teacher review.
 
 ## Security notes
