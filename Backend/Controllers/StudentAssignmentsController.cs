@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Backend.Contracts;
 using Backend.Data;
 using Backend.Models;
+using Backend.Rules;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Bson;
@@ -206,8 +207,8 @@ public sealed class StudentAssignmentsController(MongoDbContext database) : Cont
         {
             submissionMap.TryGetValue(assignment.Id!, out var submission);
             var canUpdate = submission is not null &&
-                assignment.Deadline > now &&
-                submission.Status != SubmissionStatus.Reviewed;
+                SubmissionRules.GetUpdateFailure(assignment, submission, now) ==
+                SubmissionUpdateFailure.None;
 
             return new StudentAssignmentResponse(
                 assignment.Id!,
@@ -226,7 +227,7 @@ public sealed class StudentAssignmentsController(MongoDbContext database) : Cont
                 submission?.Status,
                 submission?.Marks,
                 submission?.Feedback,
-                submission is null && assignment.Deadline > now,
+                submission is null && SubmissionRules.CanCreateSubmission(student, assignment, now),
                 canUpdate);
         }).ToArray();
     }

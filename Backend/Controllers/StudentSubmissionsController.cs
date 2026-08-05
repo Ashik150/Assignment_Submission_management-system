@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Backend.Contracts;
 using Backend.Data;
 using Backend.Models;
+using Backend.Rules;
 using Backend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -102,13 +103,13 @@ public sealed class StudentSubmissionsController(
             return AssignmentNotFound();
         }
 
-        if (assignment.Deadline <= DateTime.UtcNow)
+        if (!SubmissionRules.CanCreateSubmission(student, assignment, DateTime.UtcNow))
         {
             return ConflictProblem("The deadline has passed and this assignment no longer accepts submissions.");
         }
 
         var answer = request.Answer?.Trim() ?? string.Empty;
-        if (answer.Length == 0 && request.Pdf is null)
+        if (!SubmissionRules.HasSubmissionContent(answer, request.Pdf is not null, false))
         {
             return InvalidRequest("Write an answer, attach a PDF, or provide both.");
         }
@@ -193,19 +194,31 @@ public sealed class StudentSubmissionsController(
             return AssignmentNotFound();
         }
 
-        if (assignment.Deadline <= DateTime.UtcNow)
+        var updateFailure = SubmissionRules.GetUpdateFailure(
+            assignment,
+            submission,
+            DateTime.UtcNow);
+        if (updateFailure == SubmissionUpdateFailure.DeadlinePassed)
         {
             return ConflictProblem("The deadline has passed and this submission can no longer be updated.");
         }
 
-        if (submission.Status == SubmissionStatus.Reviewed)
+        if (updateFailure == SubmissionUpdateFailure.ReviewedSubmission)
         {
             return ConflictProblem("A reviewed submission cannot be updated.");
         }
 
+        if (updateFailure == SubmissionUpdateFailure.AssignmentUnavailable)
+        {
+            return AssignmentNotFound();
+        }
+
         var answer = request.Answer?.Trim() ?? string.Empty;
         var keepsExistingPdf = request.Pdf is null && !request.RemovePdf && submission.PdfFileId is not null;
-        if (answer.Length == 0 && request.Pdf is null && !keepsExistingPdf)
+        if (!SubmissionRules.HasSubmissionContent(
+            answer,
+            request.Pdf is not null,
+            keepsExistingPdf))
         {
             return InvalidRequest("Write an answer, attach a PDF, or provide both.");
         }
@@ -238,10 +251,7 @@ public sealed class StudentSubmissionsController(
             submission.PdfFileSize = null;
         }
 
-        submission.Status = SubmissionStatus.Submitted;
-        submission.Marks = null;
-        submission.ReviewedAt = null;
-        submission.UpdatedAt = DateTime.UtcNow;
+        SubmissionRules.MarkAsResubmitted(submission, DateTime.UtcNow);
         try
         {
             await database.Submissions.ReplaceOneAsync(
@@ -299,9 +309,8 @@ public sealed class StudentSubmissionsController(
         {
             assignmentMap.TryGetValue(submission.AssignmentId, out var assignment);
             var canUpdate = assignment is not null &&
-                assignment.Status == AssignmentStatus.Published &&
-                assignment.Deadline > now &&
-                submission.Status != SubmissionStatus.Reviewed;
+                SubmissionRules.GetUpdateFailure(assignment, submission, now) ==
+                SubmissionUpdateFailure.None;
 
             return new StudentSubmissionResponse(
                 submission.Id!,

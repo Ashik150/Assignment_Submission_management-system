@@ -208,9 +208,29 @@ Run the project checks with:
 
 ```bash
 dotnet build Backend/Backend.csproj
+dotnet test Backend.Tests/Backend.Tests.csproj
 cd Frontend
 npm run lint
 npm run build
+```
+
+### Backend unit tests
+
+The `Backend.Tests` xUnit project runs without MongoDB or other external services. Its tests cover:
+
+- student course and published-assignment access rules
+- submission deadlines and written/PDF content requirements
+- returned, reviewed, and resubmitted workflow transitions
+- maximum marks, required review marks, feedback, and review timestamps
+- administrator, teacher, and student controller role declarations
+- submission PDF ownership and teacher-assignment access
+- JWT signature, issuer, audience, identity, and role claims
+- password hashing, salt uniqueness, invalid passwords, and malformed stored hashes
+
+Generate a local coverage report input with:
+
+```bash
+dotnet test Backend.Tests/Backend.Tests.csproj --collect:"XPlat Code Coverage"
 ```
 
 ## Assumptions and current scope
