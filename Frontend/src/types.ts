@@ -31,6 +31,14 @@ export interface DashboardSummary {
   pendingReviews: number
 }
 
+export interface TeacherDashboardSummary {
+  assignedSubjects: number
+  assignments: number
+  publishedAssignments: number
+  submissions: number
+  pendingReviews: number
+}
+
 export interface ManagedUser {
   id: string
   fullName: string
@@ -77,6 +85,32 @@ export interface AdminAssignment {
   subjectName: string
   teacherId: string
   teacherName: string
+  deadline: string
+  maximumMarks: number
+  status: AssignmentStatus
+  submissionCount: number
+  createdAt: string
+  updatedAt: string
+}
+
+export interface TeacherSubject {
+  id: string
+  name: string
+  code: string
+  courseId: string
+  courseName: string
+  isActive: boolean
+  isCourseActive: boolean
+}
+
+export interface TeacherAssignment {
+  id: string
+  title: string
+  description: string
+  courseId: string
+  courseName: string
+  subjectId: string
+  subjectName: string
   deadline: string
   maximumMarks: number
   status: AssignmentStatus

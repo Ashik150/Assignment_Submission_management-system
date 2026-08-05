@@ -1,6 +1,6 @@
 # Assignment & Submission Management System
 
-A full-stack academic management application built with React, TypeScript, ASP.NET Core, and MongoDB. The current implementation delivers the administrator workspace from the recruitment brief: secure admin login, teacher/student account management, course and subject management, teacher assignment, and system-wide assignment/submission oversight.
+A full-stack academic management application built with React, TypeScript, ASP.NET Core, and MongoDB. The current implementation delivers secure, role-aware administrator and teacher workspaces for managing people, academic structure, assignments, submissions, marks, and feedback.
 
 ## Implemented features
 
@@ -16,10 +16,23 @@ A full-stack academic management application built with React, TypeScript, ASP.N
 - Filter and view all student submissions, answers, marks, and feedback
 - Responsive desktop/mobile navigation and forms
 
+### Teacher portal
+
+- Sign in through the shared login page with credentials created by an administrator
+- Dashboard totals for assigned subjects, assignments, published work, submissions, and pending reviews
+- View only the active courses and subjects assigned to the authenticated teacher
+- Create, search, filter, update, publish, draft, and safely delete assignments
+- Define assignment title, instructions, course, subject, deadline, and maximum marks
+- View only submissions belonging to the teacher's own assignments
+- Read student answers and assign marks up to the configured maximum
+- Provide feedback and change submission status to Submitted, Late, Reviewed, or Returned
+- Responsive assignment and submission review interfaces
+
 ### Backend safeguards
 
 - PBKDF2-SHA256 password hashing with per-password salts
-- Admin-only authorization on every `/api/admin/*` endpoint
+- Role authorization on every `/api/admin/*` and `/api/teacher/*` endpoint
+- Ownership checks preventing teachers from accessing another teacher's assignments or submissions
 - Request validation and RFC 7807 problem responses
 - Unique MongoDB indexes for user emails, course codes, and subject codes within a course
 - Referential checks that prevent deleting records still used by academic data
@@ -38,14 +51,14 @@ A full-stack academic management application built with React, TypeScript, ASP.N
 Backend/
   Configuration/   Typed application settings
   Contracts/       API request and response models
-  Controllers/     Authentication and admin REST endpoints
+  Controllers/     Authentication, admin, and teacher REST endpoints
   Data/            MongoDB collections, indexes, and seed logic
   Models/          MongoDB documents and domain enums
   Services/        Password hashing and token creation
 Frontend/
-  src/components/  Reusable admin layout, icons, and modal
+  src/components/  Reusable role-aware layout, icons, and modal
   src/lib/         API client
-  src/pages/       Admin dashboard and management screens
+  src/pages/       Admin and teacher dashboards and workflow screens
 ```
 
 ## Local setup
@@ -107,6 +120,10 @@ Password: Admin123!
 
 These are development defaults. Change them through environment variables before deploying. The seed process only creates the administrator when that email does not already exist; it does not overwrite an existing password.
 
+### Create a teacher login
+
+Sign in as the development administrator, open **People**, and create an active Teacher account with an email and temporary password. Then create a course and subject, assign that teacher to the subject, log out, and sign in through the same page with the teacher credentials.
+
 ## Admin API
 
 All admin routes require `Authorization: Bearer <token>`.
@@ -123,6 +140,20 @@ All admin routes require `Authorization: Bearer <token>`.
 | `GET/PUT/DELETE` | `/api/admin/subjects/{id}` | Read, update, assign a teacher, or delete a subject |
 | `GET` | `/api/admin/assignments` | View/filter all assignments |
 | `GET` | `/api/admin/submissions` | View/filter all submissions |
+
+## Teacher API
+
+All teacher routes require a JWT containing the `Teacher` role. Results are restricted to the authenticated teacher.
+
+| Method | Route | Purpose |
+| --- | --- | --- |
+| `GET` | `/api/teacher/dashboard` | Get teacher workflow totals |
+| `GET` | `/api/teacher/subjects` | List subjects assigned to the teacher |
+| `GET/POST` | `/api/teacher/assignments` | List or create the teacher's assignments |
+| `GET/PUT/DELETE` | `/api/teacher/assignments/{id}` | Read, update, publish/draft, or delete an assignment |
+| `GET` | `/api/teacher/submissions` | List/filter submissions for the teacher's assignments |
+| `GET` | `/api/teacher/submissions/{id}` | Read a submission and student answer |
+| `PUT` | `/api/teacher/submissions/{id}/review` | Save marks, feedback, and submission status |
 
 ## MongoDB data model
 
@@ -151,7 +182,9 @@ npm run build
 - Administrators can manage teacher/student accounts but cannot create another administrator through the public admin CRUD API.
 - Teachers are assigned at subject level, which also associates them with the subject's course.
 - Hard deletion is allowed only for unreferenced records; deactivation preserves academic history.
-- This branch implements the requested administrator system. Teacher assignment authoring/review screens and student submission screens are separate role workflows and are not included yet. The admin oversight pages display assignment/submission documents created by those workflows or existing database data.
+- Teachers can only create assignments for active subjects assigned to them and cannot delete assignments that already have submissions.
+- A numeric mark is required when setting a submission to `Reviewed`; `Returned` supports revision requests without a mark.
+- This branch implements the administrator and teacher systems. The student assignment viewing and submission workflow is not included yet.
 
 ## Security notes
 

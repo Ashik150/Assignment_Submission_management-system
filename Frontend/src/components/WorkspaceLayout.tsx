@@ -2,7 +2,7 @@ import { useState, type ReactNode } from 'react'
 import type { AuthenticatedUser, ViewName } from '../types'
 import { Icon } from './Icon'
 
-interface AdminLayoutProps {
+interface WorkspaceLayoutProps {
   activeView: ViewName
   children: ReactNode
   onLogout: () => void
@@ -10,7 +10,13 @@ interface AdminLayoutProps {
   user: AuthenticatedUser
 }
 
-const navigation: { label: string; icon: Parameters<typeof Icon>[0]['name']; view: ViewName }[] = [
+interface NavigationItem {
+  label: string
+  icon: Parameters<typeof Icon>[0]['name']
+  view: ViewName
+}
+
+const adminNavigation: NavigationItem[] = [
   { label: 'Dashboard', icon: 'dashboard', view: 'dashboard' },
   { label: 'People', icon: 'users', view: 'users' },
   { label: 'Courses', icon: 'courses', view: 'courses' },
@@ -19,8 +25,16 @@ const navigation: { label: string; icon: Parameters<typeof Icon>[0]['name']; vie
   { label: 'Submissions', icon: 'submissions', view: 'submissions' },
 ]
 
-export function AdminLayout({ activeView, children, onLogout, onNavigate, user }: AdminLayoutProps) {
+const teacherNavigation: NavigationItem[] = [
+  { label: 'Dashboard', icon: 'dashboard', view: 'dashboard' },
+  { label: 'My assignments', icon: 'assignments', view: 'assignments' },
+  { label: 'Submissions', icon: 'submissions', view: 'submissions' },
+]
+
+export function WorkspaceLayout({ activeView, children, onLogout, onNavigate, user }: WorkspaceLayoutProps) {
   const [menuOpen, setMenuOpen] = useState(false)
+  const isAdmin = user.role === 'Admin'
+  const navigation = isAdmin ? adminNavigation : teacherNavigation
   const navigate = (view: ViewName) => {
     onNavigate(view)
     setMenuOpen(false)
@@ -31,9 +45,9 @@ export function AdminLayout({ activeView, children, onLogout, onNavigate, user }
       <aside className={`sidebar ${menuOpen ? 'sidebar-open' : ''}`}>
         <div className="brand">
           <span className="brand-mark"><Icon name="school" size={25} /></span>
-          <span><strong>Shikkha</strong><small>Admin workspace</small></span>
+          <span><strong>Shikkha</strong><small>{isAdmin ? 'Admin workspace' : 'Teacher workspace'}</small></span>
         </div>
-        <nav aria-label="Admin navigation">
+        <nav aria-label={`${user.role} navigation`}>
           <span className="nav-label">Workspace</span>
           {navigation.map((item) => (
             <button
@@ -62,10 +76,10 @@ export function AdminLayout({ activeView, children, onLogout, onNavigate, user }
             <Icon name="menu" />
           </button>
           <div>
-            <span className="topbar-label">Admin portal</span>
+            <span className="topbar-label">{isAdmin ? 'Admin portal' : 'Teacher portal'}</span>
             <strong>{navigation.find((item) => item.view === activeView)?.label}</strong>
           </div>
-          <span className="role-chip">Administrator</span>
+          <span className="role-chip">{isAdmin ? 'Administrator' : 'Teacher'}</span>
         </header>
         <main className="content">{children}</main>
       </div>

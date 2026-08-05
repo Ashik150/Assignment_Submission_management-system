@@ -19,8 +19,8 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
     setSubmitting(true)
     try {
       const session = await login(email, password)
-      if (session.user.role !== 'Admin') {
-        setError('This portal is available to administrators only.')
+      if (session.user.role === 'Student') {
+        setError('The student workspace is not available yet.')
         return
       }
       onAuthenticated(session)
@@ -46,8 +46,8 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
         <form className="login-card" onSubmit={submit}>
           <div>
             <span className="eyebrow">Welcome back</span>
-            <h2>Sign in to Admin</h2>
-            <p>Use your administrator credentials to continue.</p>
+            <h2>Sign in to your workspace</h2>
+            <p>Use your administrator or teacher credentials to continue.</p>
           </div>
           {error && <div className="alert error" role="alert">{error}</div>}
           <label>Email address<input autoComplete="email" onChange={(event) => setEmail(event.target.value)} required type="email" value={email} /></label>
@@ -55,7 +55,6 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
           <button className="primary-button wide" disabled={submitting} type="submit">
             {submitting ? 'Signing in…' : 'Sign in'} <Icon name="arrow" size={18} />
           </button>
-          <p className="demo-note"><strong>Development demo</strong><br />admin@example.com · Admin123!</p>
         </form>
       </section>
     </main>
